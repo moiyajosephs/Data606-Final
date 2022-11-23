@@ -171,3 +171,131 @@ describeBy(student_mat$G3,
 
 
 
+# Example with null hypothesis 
+
+
+To remove any relationship that might exist in the population(by permutation)
+
+Calculate the original observed statistic. 
+
+```{r}
+
+# This would answer is there a difference in romantic relationships between sex and romantic relationships
+
+first.one <- student_mat %>%
+  select(sex,romantic)  %>%
+  filter(romantic %in% c("yes","no"))
+
+diff_orig <- student_mat %>% 
+  group_by(sex) %>%
+  summarize(prop_romance = mean(romantic == "yes")) %>%
+  summarize(obs_diff_prop = diff(prop_romance))
+
+diff_orig
+```
+
+
+
+# Sex with grades
+
+
+```{r}
+# Difference between gender and their grades
+
+## change G3, to pass or fail
+## if over a certain grade, pass, else fail. then find the difference in propostion of high grades
+second.one <- student_mat %>%
+  select(sex,romantic, G3)
+
+diff_orig2 <- student_mat %>% 
+  group_by(sex, romantic) %>%
+  # summarize the proportion of people who passed
+  summarize(prop_final = mean(G3>15)) %>%
+  # summarize the difference in proportion of high grades
+  summarize(obs_diff_prop = diff(prop_final))
+
+diff_orig2
+
+
+# gender and their grades and their romance
+
+```
+
+```{r}
+library(infer)
+```
+
+
+```{r}
+model <- lm(G3 ~ romantic, data = student_mat)
+summary(model)
+```
+
+
+```{r}
+ggplot(student_mat, aes(x=romantic, y = G3)) +
+  geom_jitter() +
+  geom_point(alpha = 0.2)
+```
+
+```{r}
+ggplot(student_mat, aes(x=romantic, y = G3)) +
+  geom_boxplot()
+```
+
+```{r}
+ggplot(student_mat, aes(x= G3)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(vars(romantic))
+```
+
+```{r}
+summary_stats <- student_mat %>%
+  group_by(romantic) %>%
+  summarise(mean_by_group = mean(G3))
+summary_stats
+```
+
+
+## Making predictions: 
+
+```{r}
+explanatory_data <- tibble(romantic = c("yes","no"))
+explanatory_data
+```
+
+```{r}
+explanatory_data %>%
+  mutate(
+    respnse_var = predict(model, explanatory_data)
+  )
+```
+
+```{r}
+predict(model,explanatory_data)
+```
+
+
+## Visualizing predictions
+```{r} 
+#Predict the grade for each student
+predict(model)
+```
+
+
+
+
+```{r}
+model <- lm(G3 ~ activities, data = student_mat)
+summary(model)
+```
+
+
+
+
+
+```{r}
+model <- lm(G3 ~ paid, data = student_mat)
+summary(model)
+```
+
