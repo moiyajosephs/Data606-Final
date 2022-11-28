@@ -5,7 +5,7 @@ date: "2022-10-18"
 output: pdf_document
 ---
 
-### Data Preparation
+## Data Preparation
 
 ```{r setup, echo=TRUE, results='hide', warning=FALSE, message=FALSE}
 # load data
@@ -16,33 +16,33 @@ library(curl)
 library(psych)
 ```
 
-
-### Research question 
-
-**You should phrase your research question in a way that matches up with the scope of inference your dataset allows for.**
-
-Does having a social life predict final grade? I would use t-test to answer this question, comparing the groups that have a social life vs those who do not.
+## Abstract
 
 
-### Cases 
+## Research question 
+
+Does having a social life predict final grade? 
+
+
+## Cases 
 
 **What are the cases, and how many are there?**
 
 There are 649 cases that represent students and their achievements in secondary education in two Portuguese schools.
 
-### Data collection 
+## Data collection 
 
 **Describe the method of data collection.**
 
 The data was collected using school reports and questionnaires.
 
-### Type of study 
+## Type of study 
 
 **What type of study is this (observational/experiment)?**
 
 This is observational study.
 
-### Data Source 
+## Data Source 
 
 **If you collected the data, state self-collected. If not, provide a citation/link.**
 
@@ -62,15 +62,13 @@ The independent variable is the variables that describe the students social life
 
 
 
-### Relevant summary statistics 
+## Relevant summary statistics 
 
-**Provide summary statistics for each the variables. Also include appropriate visualizations related to your research question (e.g. scatter plot, boxplots, etc). This step requires the use of R, hence a code chunk is provided below. Insert more code chunks as needed.**
 
 ```{r}
 student_mat_csv <- "https://raw.githubusercontent.com/moiyajosephs/Data606-Final/main/student-mat.csv"
 student_mat <- read_delim(curl(student_mat_csv),delim = ";")
 ```
-
 
 
 ```{r}
@@ -82,16 +80,8 @@ summary(student_mat)
 ggplot(student_mat, aes(sex)) + geom_bar()
 ```
 
-#### Activities
 
-Students reply yes or no if they have extra curricular activities, indicated by the `activities` variables.
-
-```{r}
-table(student_mat$activities)
-ggplot(student_mat, aes(activities)) + geom_bar()
-```
-
-#### Romantic
+## Romantic
 
 Students reply either yes or no if they are in a romantic relationship, indicated by the `romantic` variable.
 
@@ -100,7 +90,7 @@ Students reply either yes or no if they are in a romantic relationship, indicate
 ggplot(student_mat, aes(romantic)) + geom_bar()
 ```
 
-### Freetime 
+## Freetime 
 
 Freetime after school rated from 1 very low to 5 very high.
 
@@ -109,99 +99,19 @@ ggplot(student_mat, aes(freetime)) + geom_bar()
 
 ```
 
-#### Family Relationship
 
-`famrel` indicated the quality of family relationships on a scale from (numeric: from 1 - very bad to 5 - excellent)
-
-
-```{r}
-ggplot(student_mat, aes(famrel)) + geom_bar()
-
-```
+## Grades
 
 
-#### Going Out
-
-`goout` indicates if students go out with friends rated from (numeric: from 1 - very low to 5 - very high)
-
-
-```{r}
-ggplot(student_mat, aes(goout)) + geom_bar()
-
-```
-
-
-#### Alcohol Consumption
-
-Dalc indicated the workday alcohol consumption from very low to very high and Walc indicates weekend alcohol consumption, also from very low to very high.
-
-
-```{r}
-ggplot(student_mat, aes(Dalc)) + geom_bar()
-
-```
-
-
-```{r}
-ggplot(student_mat, aes(Walc)) + geom_bar()
-
-```
-
-#### Grades
-
-```{r}
-ggplot(student_mat, aes(x=G3)) + geom_histogram()
-
-```
-
-
-#### Sample comparison 
-
-For the final project I will compare the final grades with the other social factors. Here I compare with the student romantic social life.
 
 ```{r}
 describe(student_mat$G3)
 ```
 
 
-```{r}
-describeBy(student_mat$G3, 
-           group = student_mat$romantic, mat=TRUE)
-```
 
 
-
-# Sex with grades
-
-
-```{r}
-# Difference between gender and their grades
-
-## change G3, to pass or fail
-## if over a certain grade, pass, else fail. then find the difference in propostion of high grades
-second.one <- student_mat %>%
-  select(sex,romantic, G3)
-
-diff_orig2 <- student_mat %>% 
-  group_by(sex, romantic) %>%
-  # summarize the proportion of people who passed
-  summarize(prop_final = mean(G3>15)) %>%
-  # summarize the difference in proportion of high grades
-  summarize(obs_diff_prop = diff(prop_final))
-
-diff_orig2
-
-
-# gender and their grades and their romance
-
-```
-
-```{r}
-library(infer)
-```
-
-
-### The Romance Model
+## The Romance Model
 
 ```{r}
 romantic.model <- lm(G3 ~ romantic, data = student_mat)
@@ -234,7 +144,13 @@ summary_stats
 ```
 
 
-## Making predictions: 
+```{r}
+describeBy(student_mat$G3, 
+           group = student_mat$romantic, mat=TRUE)
+```
+
+
+### Making predictions: 
 
 ```{r}
 explanatory_data <- tibble(romantic = c("yes","no"))
@@ -244,35 +160,165 @@ explanatory_data
 ```{r}
 explanatory_data %>%
   mutate(
-    respnse_var = predict(romantic.model, explanatory_data)
+    response_var = predict(romantic.model, explanatory_data)
   )
 ```
 
 
 
-## Visualizing predictions
+### Visualizing predictions
 ```{r} 
 #Predict the grade for each student
-predict(model)
+predict(romantic.model)
 ```
 
 
 
-### The activities Model
+## The Activities Model
+Students reply yes or no if they have extra curricular activities, indicated by the `activities` variables.
 
-
-
+```{r}
+ggplot(student_mat, aes(activities)) + geom_bar()
+```
 
 ```{r}
 activities.model <- lm(G3 ~ activities, data = student_mat)
-summary(model)
+summary(activities.model)
 ```
 
 
+```{r}
+ggplot(student_mat, aes(x=activities, y = G3)) +
+  geom_jitter() +
+  geom_point(alpha = 0.2)
+```
+
+```{r}
+ggplot(student_mat, aes(x=activities, y = G3)) +
+  geom_boxplot()
+```
+
+```{r}
+ggplot(student_mat, aes(x= G3)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(vars(activities))
+```
+
+```{r}
+summary_stats <- student_mat %>%
+  group_by(activities) %>%
+  summarise(mean_by_group = mean(G3))
+summary_stats
+```
+
+
+### Making predictions: 
+
+```{r}
+explanatory_data <- tibble(activities = c("yes","no"))
+explanatory_data
+```
+
+```{r}
+explanatory_data %>%
+  mutate(
+    respnse_var = predict(activities.model, explanatory_data)
+  )
+```
+
+
+## Freetime 
+
+Freetime after school rated from 1 very low to 5 very high.
+
+```{r}
+ggplot(student_mat, aes(freetime)) + geom_bar()
+
+```
+
+```{r}
+freetime.model <- lm(G3 ~ freetime, data = student_mat)
+summary(freetime.model)
+```
+Not significant!
 
 
 
-### Academic Help
+## Family Relationship
+
+`famrel` indicated the quality of family relationships on a scale from (numeric: from 1 - very bad to 5 - excellent)
+
+
+```{r}
+ggplot(student_mat, aes(famrel)) + geom_bar()
+
+```
+
+```{r}
+famrel.model <- lm(G3 ~ famrel, data = student_mat)
+summary(famrel.model)
+```
+
+No significance
+
+## Going Out
+
+`goout` indicates if students go out with friends rated from (numeric: from 1 - very low to 5 - very high)
+
+
+```{r}
+ggplot(student_mat, aes(goout)) + geom_bar()
+
+```
+
+
+```{r}
+goout.model <- lm(G3 ~ goout, data = student_mat)
+summary(goout.model)
+
+```
+
+Significance!!
+
+
+
+## Alcohol Consumption
+
+Dalc indicated the workday alcohol consumption from very low to very high and Walc indicates weekend alcohol consumption, also from very low to very high.
+
+
+```{r}
+ggplot(student_mat, aes(Dalc)) + geom_bar()
+
+```
+
+
+```{r}
+Dalc.model <- lm(G3 ~ Dalc, data = student_mat)
+summary(Dalc.model)
+```
+
+Not significant
+
+
+```{r}
+ggplot(student_mat, aes(Walc)) + geom_bar()
+
+```
+
+
+```{r}
+
+Walc.model <- lm(G3 ~ Walc, data = student_mat)
+summary(Walc.model)
+```
+
+
+Not significant
+
+
+
+## Academic Help
 
 
 
@@ -283,5 +329,13 @@ summary(model)
 
 
 
+
+
+
 ### Domestic Life
+
+
+# Conclusion
+Why is this analysis important?
+Limitations of the analysis?
 
