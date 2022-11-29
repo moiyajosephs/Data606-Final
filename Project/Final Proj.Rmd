@@ -312,6 +312,27 @@ summary(Walc.model)
 Not significant
 
 
+## Using Multiple Regression
+
+Upon further implementation, I realized there may be more than one explanatory variable for the output. To consider the variable in conjunction with the `G3` variable, I will be using multiple linear regression, and establishing my best naively implemented model to predict G3. 
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data= student_mat)
+summary(model_full)
+```
+
+`Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant. 
+
+The ideal student according this model would be a student with no romantic relationship and who goes out. 
+
+```{r}
+ideal.student.model <- lm(G3 ~ romantic + goout + freetime, data= student_mat)
+summary(ideal.student.model)
+```
+
+When removing the other variables the 
+
+
 
 ## Academic Help
 
@@ -321,8 +342,6 @@ Not significant
 model <- lm(G3 ~ paid, data = student_mat)
 summary(model)
 ```
-
-
 
 
 
