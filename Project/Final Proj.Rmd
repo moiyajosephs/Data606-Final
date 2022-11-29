@@ -187,11 +187,6 @@ summary(activities.model)
 ```
 
 
-```{r}
-ggplot(student_mat, aes(x=activities, y = G3)) +
-  geom_jitter() +
-  geom_point(alpha = 0.2)
-```
 
 ```{r}
 ggplot(student_mat, aes(x=activities, y = G3)) +
