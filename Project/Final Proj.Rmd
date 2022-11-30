@@ -82,7 +82,7 @@ ggplot(student_mat, aes(sex)) + geom_bar()
 ```
 
 ```{r}
-ggplot(student_mat, aes(G3)) + geom_bar()
+ggplot(student_mat, aes(G3)) + geom_bar() + facet_wrap(vars(sex))
 ```
 
 Normally distributed with one obvious outlier. 
@@ -295,6 +295,9 @@ Upon further implementation, I realized there may be more than one explanatory v
 
 vif to check for collinearity.
 
+
+### Model Full
+
 ```{r}
 model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data= student_mat)
 summary(model_full)
@@ -304,7 +307,118 @@ vif(model_full)
 
 `Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant. 
 
+### Drop Activities 
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel, data= student_mat)
+summary(model_full)
+vif(model_full)
 
+```
+### Drop Famrel
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+### Remove Walc
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + famrel + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Walc + famrel + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + Dalc + Walc + famrel + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+
+```{r}
+model_full <- lm(G3 ~ romantic  + goout + Dalc + Walc + famrel + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+
+```{r}
+model_full <- lm(G3 ~ freetime + goout + Dalc + Walc + famrel + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+Full Model:
+Adjusted R-squared:  0.02282 
+
+exclude activities:
+Adjusted R-squared:  0.02501 <-- highest adjusted r sqaures
+
+exclude famrel:
+Adjusted R-squared:  0.02327 
+
+exclude Wald:
+Adjusted R-squared:  0.02465 
+
+exclude Dalc:
+Adjusted R-squared:  0.02439
+
+exclude goout:
+Adjusted R-squared:  0.006961 
+
+
+exclude freetime:
+Adjusted R-squared:  0.02328 
+
+exclude romantic:
+
+Adjusted R-squared:  0.009661 
+
+
+
+Therefore we drop activities from the model
+
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + activities, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc, data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc , data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout , data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+```{r}
+model_full <- lm(G3 ~ romantic + goout , data= student_mat)
+summary(model_full)
+vif(model_full)
+```
+
+-----
 ```{r}
 ideal.student.model <- lm(G3 ~ romantic + goout, data= student_mat)
 summary(ideal.student.model)
