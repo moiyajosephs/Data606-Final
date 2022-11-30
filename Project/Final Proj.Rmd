@@ -85,10 +85,7 @@ ggplot(student_mat, aes(sex)) + geom_bar()
 ggplot(student_mat, aes(G3)) + geom_bar()
 ```
 
-Normally distributed with one outlier
-
-
-
+Normally distributed with one obvious outlier. 
 
 
 
@@ -147,7 +144,8 @@ summary(one.way)
 
 ```{r}
 ggplot(data = romantic.model, aes(x = .fitted, y = .resid)) +
-  geom_point() +
+  geom_point() + 
+  geom_jitter()+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Fitted values") +
   ylab("Residuals")
@@ -317,12 +315,6 @@ When removing the other variables the most ideal variables are whether the stude
 
 There might be some collinearity between the explanatory variables, given that when removed the estimates have changed. 
 
-```{r} 
-#Predict the grade for each student
-ideal.students <- tibble(predict(ideal.student.model))
-ideal.students
-```
-
 
 ```{r}
 ggplot(student_mat, aes(G3, goout, color=romantic)) +
@@ -364,12 +356,6 @@ ggplot(ideal.student.model, aes(sample = .resid)) +
 ```
 
 
-```{r}
-library(MASS)
-robust <- rlm(G3 ~ romantic + goout, data=student_mat)
-summary(robust)$sigma
-summary(ideal.student.model)$sigma
-```
 
 By using the rlm model it is much lower. 
 
@@ -378,6 +364,62 @@ By using the rlm model it is much lower.
 summary(robust)
 ```
 
+```{r}
+library(MASS)
+robust <- rlm(G3 ~ romantic + goout, data=student_mat)
+summary(robust)$sigma
+summary(ideal.student.model)$sigma
+```
+
+
+## Removing the Outliers
+
+
+```{r}
+student.pass <- student_mat %>% filter(G3 != 0)
+student.pass
+```
+### The New Full Model
+
+```{r}
+model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data= student.pass)
+summary(model_full)
+vif(model_full)
+```
+### Linear Model
+
+```{r}
+model_full <- lm(G3 ~ goout , data= student.pass)
+summary(model_full)
+
+```
+
+```{r}
+
+ggplot(data = model_full, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_jitter() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+
+
+```
+
+```{r}
+
+ggplot(model_full, aes(sample = .resid)) +
+ stat_qq() +
+  xlab("resid")
+
+```
+```{r}
+
+ggplot(model_full, aes(x=.resid)) +
+  geom_histogram(binwidth = .5) +
+  xlab("resid")
+
+```
 
 
 
