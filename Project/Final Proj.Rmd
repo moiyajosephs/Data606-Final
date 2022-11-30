@@ -14,6 +14,7 @@ library(tidyverse)
 library(ggplot2)
 library(curl)
 library(psych)
+library(car)
 ```
 
 ## Abstract
@@ -80,6 +81,18 @@ summary(student_mat)
 ggplot(student_mat, aes(sex)) + geom_bar()
 ```
 
+```{r}
+ggplot(student_mat, aes(G3)) + geom_bar()
+```
+
+Normally distributed with one outlier
+
+
+
+
+
+
+## The Romance Model
 
 ## Romantic
 
@@ -90,40 +103,12 @@ Students reply either yes or no if they are in a romantic relationship, indicate
 ggplot(student_mat, aes(romantic)) + geom_bar()
 ```
 
-## Freetime 
-
-Freetime after school rated from 1 very low to 5 very high.
-
-```{r}
-ggplot(student_mat, aes(freetime)) + geom_bar()
-
-```
-
-
-## Grades
-
-
-
-```{r}
-describe(student_mat$G3)
-```
-
-
-
-
-## The Romance Model
 
 ```{r}
 romantic.model <- lm(G3 ~ romantic, data = student_mat)
 summary(romantic.model)
 ```
 
-
-```{r}
-ggplot(student_mat, aes(x=romantic, y = G3)) +
-  geom_jitter() +
-  geom_point(alpha = 0.2)
-```
 
 ```{r}
 ggplot(student_mat, aes(x=romantic, y = G3)) +
@@ -135,6 +120,9 @@ ggplot(student_mat, aes(x= G3)) +
   geom_histogram(bins = 10) +
   facet_wrap(vars(romantic))
 ```
+
+
+Romantic is statistically significant according to the anova test. 
 
 ```{r}
 summary_stats <- student_mat %>%
@@ -149,49 +137,29 @@ describeBy(student_mat$G3,
            group = student_mat$romantic, mat=TRUE)
 ```
 
+```{r}
+one.way <- aov(G3 ~ romantic, data = student_mat)
+summary(one.way)
+```
 
-### Making predictions: 
+### Analyzing the r^2
+
 
 ```{r}
-explanatory_data <- tibble(romantic = c("yes","no"))
-explanatory_data
+ggplot(data = romantic.model, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+
 ```
 
-```{r}
-explanatory_data %>%
-  mutate(
-    response_var = predict(romantic.model, explanatory_data)
-  )
-```
-
-
-
-### Visualizing predictions
-```{r} 
-#Predict the grade for each student
-predict(romantic.model)
-```
-
+## Do anova and explain the variability
 
 
 ## The Activities Model
 Students reply yes or no if they have extra curricular activities, indicated by the `activities` variables.
 
-```{r}
-ggplot(student_mat, aes(activities)) + geom_bar()
-```
-
-```{r}
-activities.model <- lm(G3 ~ activities, data = student_mat)
-summary(activities.model)
-```
-
-
-
-```{r}
-ggplot(student_mat, aes(x=activities, y = G3)) +
-  geom_boxplot()
-```
 
 ```{r}
 ggplot(student_mat, aes(x= G3)) +
@@ -199,27 +167,29 @@ ggplot(student_mat, aes(x= G3)) +
   facet_wrap(vars(activities))
 ```
 
-```{r}
-summary_stats <- student_mat %>%
-  group_by(activities) %>%
-  summarise(mean_by_group = mean(G3))
-summary_stats
-```
-
-
-### Making predictions: 
 
 ```{r}
-explanatory_data <- tibble(activities = c("yes","no"))
-explanatory_data
+activities.model <- lm(G3 ~ activities, data = student_mat)
+summary(activities.model)
 ```
+By looking at the summary of the `activities.model` we can see that activites estimate is not statistically significant as indicated by p-value which is greater than 0.05. As well as the F-statistic and p value given, which is also greater than 0.05.
+
+
+
+
 
 ```{r}
-explanatory_data %>%
-  mutate(
-    respnse_var = predict(activities.model, explanatory_data)
-  )
+
+ggplot(data = activities.model, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_jitter() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+
+
 ```
+
 
 
 ## Freetime 
@@ -230,6 +200,13 @@ Freetime after school rated from 1 very low to 5 very high.
 ggplot(student_mat, aes(freetime)) + geom_bar()
 
 ```
+```{r}
+ggplot(student_mat, aes(x= G3)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(vars(activities))
+```
+
+
 
 ```{r}
 freetime.model <- lm(G3 ~ freetime, data = student_mat)
@@ -275,6 +252,8 @@ summary(goout.model)
 
 Significance!!
 
+## Do anova and explain the variability
+
 
 
 ## Alcohol Consumption
@@ -316,40 +295,138 @@ Not significant
 
 Upon further implementation, I realized there may be more than one explanatory variable for the output. To consider the variable in conjunction with the `G3` variable, I will be using multiple linear regression, and establishing my best naively implemented model to predict G3. 
 
+vif to check for collinearity.
+
 ```{r}
 model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data= student_mat)
 summary(model_full)
+vif(model_full)
 ```
+
 
 `Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant. 
 
-The ideal student according this model would be a student with no romantic relationship and who goes out. 
 
 ```{r}
-ideal.student.model <- lm(G3 ~ romantic + goout + freetime, data= student_mat)
+ideal.student.model <- lm(G3 ~ romantic + goout, data= student_mat)
 summary(ideal.student.model)
+vif(ideal.student.model)
 ```
 
-When removing the other variables the 
+When removing the other variables the most ideal variables are whether the student goes out or if they are in a romantic relationship. According to this model, as the grade increases, the romantic and goout variable will decrease by the given estimates. Indicating that the less the student does/has these things the higher their grade will be.
+
+There might be some collinearity between the explanatory variables, given that when removed the estimates have changed. 
+
+```{r} 
+#Predict the grade for each student
+ideal.students <- tibble(predict(ideal.student.model))
+ideal.students
+```
 
 
-
-## Academic Help
+```{r}
+ggplot(student_mat, aes(G3, goout, color=romantic)) +
+  geom_col() +
+  facet_wrap(vars(goout))
+```
 
 
 
 ```{r}
-model <- lm(G3 ~ paid, data = student_mat)
-summary(model)
+one.way <- aov(G3 ~ romantic + goout, data = student_mat)
+summary(one.way)
+```
+
+
+```{r}
+
+ggplot(data = ideal.student.model, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_jitter() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+
+
+```
+
+
+```{r}
+ggplot(ideal.student.model, aes(x=.resid)) +
+  geom_histogram(binwidth = 1) +
+  xlab("resid")
+```
+
+```{r}
+ggplot(ideal.student.model, aes(sample = .resid)) +
+ stat_qq() +
+  xlab("resid")
+```
+
+
+```{r}
+library(MASS)
+robust <- rlm(G3 ~ romantic + goout, data=student_mat)
+summary(robust)$sigma
+summary(ideal.student.model)$sigma
+```
+
+By using the rlm model it is much lower. 
+
+
+```{r}
+summary(robust)
 ```
 
 
 
 
-### Domestic Life
+## Comparing the models
 
+Compare the statistically significant models to the multiple
+
+Given by the rsquared values this does not correctly 
 
 # Conclusion
 Why is this analysis important?
 Limitations of the analysis?
+
+
+
+
+```{r}
+model_full3 <- lm(G3 ~ romantic + age + address+ famsize+ Pstatus + Medu + Fedu + Mjob + reason + guardian + traveltime + studytime + failures + schoolsup + paid + activities + nursery + higher + internet + freetime + health + absences + goout + Dalc + Walc + famrel + activities + sex, data= student_mat)
+summary(model_full)
+```
+
+
+```{r}
+ggplot(model_full3, aes(sample = .resid)) +
+ stat_qq() +
+  xlab("resid")
+```
+
+```{r}
+ggplot(model_full3, aes(x=.resid)) +
+  geom_histogram(binwidth = 1) +
+  xlab("resid")
+
+```
+
+```{r}
+ideal.student.model.3 <- lm(G3 ~ romantic  + failures   , data= student_mat)
+summary(ideal.student.model.3)
+```
+
+```{r}
+ggplot(ideal.student.model.3, aes(x=.resid)) +
+  geom_histogram(binwidth = 1) +
+  xlab("resid")
+
+```
+
+https://statisticsbyjim.com/regression/multicollinearity-in-regression-analysis/#:~:text=The%20potential%20solutions%20include%20the,or%20partial%20least%20squares%20regression.
+
+
+https://www.statology.org/robust-regression-in-r/
 
