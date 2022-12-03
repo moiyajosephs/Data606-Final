@@ -66,7 +66,7 @@ The independent variable is the variables that describe the students social life
 ## Relevant summary statistics 
 
 
-```{r}
+```{r message=FALSE}
 student_mat_csv <- "https://raw.githubusercontent.com/moiyajosephs/Data606-Final/main/student-mat.csv"
 student_mat <- read_delim(curl(student_mat_csv),delim = ";")
 ```
@@ -171,9 +171,6 @@ activities.model <- lm(G3 ~ activities, data = student_mat)
 summary(activities.model)
 ```
 By looking at the summary of the `activities.model` we can see that activites estimate is not statistically significant as indicated by p-value which is greater than 0.05. As well as the F-statistic and p value given, which is also greater than 0.05.
-
-
-
 
 
 ```{r}
@@ -471,12 +468,8 @@ ggplot(ideal.student.model, aes(sample = .resid)) +
 
 
 
-By using the rlm model it is much lower. 
+By using the rlm model the error is lower than the lm.
 
-
-```{r}
-summary(robust)
-```
 
 ```{r}
 library(MASS)
@@ -486,6 +479,7 @@ summary(ideal.student.model)$sigma
 ```
 
 
+---
 ## Removing the Outliers
 
 
@@ -521,12 +515,11 @@ ggplot(data = model_full, aes(x = .fitted, y = .resid)) +
 ```
 
 ```{r}
-
 ggplot(model_full, aes(sample = .resid)) +
  stat_qq() +
   xlab("resid")
-
 ```
+
 ```{r}
 
 ggplot(model_full, aes(x=.resid)) +
@@ -535,6 +528,189 @@ ggplot(model_full, aes(x=.resid)) +
 
 ```
 
+
+https://book.stat420.org/transformations.html
+
+---
+
+
+```{r}
+model_full <- lm(log(G3) ~ goout , data= student.pass)
+summary(model_full)
+#vif(model_full)
+```
+
+
+```{r}
+
+ggplot(data = model_full, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_jitter() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+
+
+```
+
+```{r}
+
+ggplot(model_full, aes(sample = .resid)) +
+ stat_qq() +
+  xlab("resid")
+
+```
+
+```{r}
+
+ggplot(model_full, aes(x=.resid)) +
+  geom_histogram(binwidth = .20) +
+  xlab("resid")
+
+```
+
+By performing a logistic transformation of the G3 we get a much cleaner look at the residuals normal distribution.
+
+
+```{r}
+# Avg squared data change to the one before the log
+sqrt(mean(resid(ideal.student.model) ^ 2))
+```
+
+```{r}
+sqrt(mean(resid(model_full) ^ 2))
+```
+
+```{r}
+sqrt(mean((student_mat$G3 - fitted(ideal.student.model)) ^ 2))
+
+```
+
+```{r}
+student_mat.2 <- student_mat %>% filter(G3 != 0)
+sqrt(mean((student_mat.2$G3 - exp(fitted(model_full))) ^ 2))
+```
+
+couldn't do logistic transformation do to some grades being 0 .
+
+----
+
+Logistic
+
+
+## Change to a logistic model
+```{r}
+student.mat.binary <- student_mat %>%
+      mutate(PassFail = ifelse(G3 >= 12,1,0))
+student.mat.binary
+```
+
+```{r}
+tab <- describeBy(student.mat.binary$goout, group = student.mat.binary$PassFail, mat = TRUE, skew = FALSE)
+tab$group1 <- as.integer(as.character(tab$group1))
+```
+
+
+Dichoutimous outcome when we change it to pass fail
+
+
+
+```{r}
+lm.out <- lm(PassFail ~ goout, data = student.mat.binary)
+summary(lm.out)
+```
+
+
+```{r}
+student.mat.binary$linear_resid <- resid(lm.out)
+ggplot(student.mat.binary, aes(x = goout, y = linear_resid)) +
+    geom_point() +
+    ggtitle('Residual Plot')
+```
+
+
+
+
+
+## Predicting Data
+
+```{r}
+train.rows <- sample(nrow(student.mat.binary), nrow(student.mat.binary) * .7)
+student_train <- student.mat.binary[train.rows,]
+student_test <- student.mat.binary[-train.rows,]
+```
+
+```{r}
+student.pass <- table(student_train$PassFail) %>% prop.table
+student.pass
+```
+
+```{r}
+lr.out <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data=student_train, family=binomial(link = 'logit'))
+summary(lr.out)
+```
+
+```{r}
+student_train
+```
+
+
+
+```{r}
+student_train$prediction <- predict(lr.out, type = 'response', newdata = student_train)
+ggplot(student_train, aes(x = prediction, color = PassFail == 1)) + geom_density()
+```
+
+
+```{r}
+student_train$prediction_class <- student_train$prediction > 0.6
+tab <- table(student_train$prediction_class, 
+             student_train$PassFail) %>% prop.table() %>% print()
+```
+
+
+
+
+```{r}
+new.student <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data = student.mat.binary, family = binomial(link = "logit"))
+summary(new.student)
+```
+
+
+```{r}
+student.2 <- glm(PassFail ~ goout, data = student.mat.binary, family = binomial )
+summary(student.2)
+```
+
+y = 0.36874 - 0.23757 * goout
+
+gout ranges from 1 through 5 
+
+
+The odds of passing
+
+```{r}
+logistic <- function(t) {
+  return(1/ (1 + exp(-t)))
+}
+
+ggplot() + 
+  stat_function(fun=logistic, n = 101) +
+  xlim(-4,4) +
+  xlab('t')
+```
+
+
+
+```{r}
+library(chi)
+1-pchisq(534.75,394)
+```
+
+
+```{r}
+1-pchisq(528.24,393)
+```
 
 
 ## Comparing the models
