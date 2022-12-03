@@ -564,7 +564,7 @@ ggplot(model_full, aes(sample = .resid)) +
 ```{r}
 
 ggplot(model_full, aes(x=.resid)) +
-  geom_histogram(binwidth = .20) +
+  geom_histogram(binwidth = .25) +
   xlab("resid")
 
 ```
@@ -635,6 +635,7 @@ ggplot(student.mat.binary, aes(x = goout, y = linear_resid)) +
 ## Predicting Data
 
 ```{r}
+set.seed(811)
 train.rows <- sample(nrow(student.mat.binary), nrow(student.mat.binary) * .7)
 student_train <- student.mat.binary[train.rows,]
 student_test <- student.mat.binary[-train.rows,]
@@ -650,11 +651,6 @@ lr.out <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + ac
 summary(lr.out)
 ```
 
-```{r}
-student_train
-```
-
-
 
 ```{r}
 student_train$prediction <- predict(lr.out, type = 'response', newdata = student_train)
@@ -669,26 +665,39 @@ tab <- table(student_train$prediction_class,
 ```
 
 
+```{r}
+0.025362319 / (0.025362319+ 0.007246377)
+```
+
 
 
 ```{r}
-new.student <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data = student.mat.binary, family = binomial(link = "logit"))
-summary(new.student)
+library(caret)
+predicted <- predict(lr.out, student_test)
+#optimal <- optimalCutoff(student_test$PassFail, predicted)[1]
+confusionMatrix(student_test$PassFail, predicted)
+
+
 ```
 
 
 ```{r}
-student.2 <- glm(PassFail ~ goout, data = student.mat.binary, family = binomial )
-summary(student.2)
+student.mat.binary.reduced <- glm(PassFail ~ goout, data = student.mat.binary, family = binomial(link = "logit"))
+summary(student.mat.binary.reduced)
 ```
+
+```{r}
+anova(student.mat.binary.reduced, student.mat.binary, test="Chisq") 
+```
+
+
 
 y = 0.36874 - 0.23757 * goout
 
 gout ranges from 1 through 5 
 
 
-The odds of passing
-
+The odds of passing ?^?^?
 ```{r}
 logistic <- function(t) {
   return(1/ (1 + exp(-t)))
@@ -727,8 +736,9 @@ Limitations of the analysis?
 
 
 ```{r}
-model_full3 <- lm(G3 ~ romantic + age + address+ famsize+ Pstatus + Medu + Fedu + Mjob + reason + guardian + traveltime + studytime + failures + schoolsup + paid + activities + nursery + higher + internet + freetime + health + absences + goout + Dalc + Walc + famrel + activities + sex, data= student_mat)
-summary(model_full)
+model_full3 <- glm(PassFail ~ romantic + age + address+ famsize+ Pstatus + Medu + Fedu + Mjob + reason + guardian + traveltime + studytime + failures + schoolsup + paid + activities + nursery + higher + internet + freetime + health + absences + goout + Dalc + Walc + famrel + activities + sex, data= student.mat.binary)
+summary(model_full3)
+vif(model_full3)
 ```
 
 
@@ -740,22 +750,30 @@ ggplot(model_full3, aes(sample = .resid)) +
 
 ```{r}
 ggplot(model_full3, aes(x=.resid)) +
-  geom_histogram(binwidth = 1) +
+  geom_histogram(binwidth = .1) +
   xlab("resid")
 
 ```
 
 ```{r}
-ideal.student.model.3 <- lm(G3 ~ romantic  + failures   , data= student_mat)
+ideal.student.model.3 <- glm(PassFail ~ failures  + goout +sex  , data= student.mat.binary)
 summary(ideal.student.model.3)
 ```
 
 ```{r}
 ggplot(ideal.student.model.3, aes(x=.resid)) +
-  geom_histogram(binwidth = 1) +
+  geom_histogram(binwidth = .1) +
   xlab("resid")
 
 ```
+
+
+```{r}
+ggplot(ideal.student.model.3, aes(sample = .resid)) +
+ stat_qq() +
+  xlab("resid")
+```
+
 
 https://statisticsbyjim.com/regression/multicollinearity-in-regression-analysis/#:~:text=The%20potential%20solutions%20include%20the,or%20partial%20least%20squares%20regression.
 
