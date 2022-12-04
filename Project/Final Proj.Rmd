@@ -399,6 +399,7 @@ vif(model_full)
 ```
 ### Linear Model
 
+
 ```{r}
 model_full <- lm(G3 ~ goout , data= student.pass)
 summary(model_full)
