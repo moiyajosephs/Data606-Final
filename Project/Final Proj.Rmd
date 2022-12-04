@@ -106,12 +106,6 @@ romantic.model <- lm(G3 ~ romantic, data = student_mat)
 summary(romantic.model)
 ```
 
-
-```{r}
-ggplot(student_mat, aes(x=romantic, y = G3)) +
-  geom_boxplot()
-```
-
 ```{r}
 ggplot(student_mat, aes(x= G3)) +
   geom_histogram(bins = 10) +
@@ -152,7 +146,6 @@ ggplot(data = romantic.model, aes(x = .fitted, y = .resid)) +
 
 ```
 
-## Do anova and explain the variability
 
 
 ## The Activities Model
@@ -247,7 +240,7 @@ summary(goout.model)
 
 Significance!!
 
-## Do anova and explain the variability
+
 
 
 
@@ -304,127 +297,29 @@ vif(model_full)
 
 `Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant. 
 
-### Drop Activities 
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel, data= student_mat)
-summary(model_full)
-vif(model_full)
 
-```
-### Drop Famrel
+## Linear Regression for full model of social activitiess
+
+
 
 ```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-
-### Remove Walc
-
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + famrel + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
+model.full <- lm(G3 ~ romantic + freetime + goout + Walc + famrel + activities, data= student_mat)
+summary(model.full)
+vif(model.full)
 ```
 
 
 
 ```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Walc + famrel + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
+model.reduced <- lm(G3 ~ romantic + goout , data= student_mat)
+summary(model.reduced)
+vif(model.reduced)
 ```
 
-
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + Dalc + Walc + famrel + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-
-
-```{r}
-model_full <- lm(G3 ~ romantic  + goout + Dalc + Walc + famrel + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-
-
-```{r}
-model_full <- lm(G3 ~ freetime + goout + Dalc + Walc + famrel + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-
-Full Model:
-Adjusted R-squared:  0.02282 
-
-exclude activities:
-Adjusted R-squared:  0.02501 <-- highest adjusted r sqaures
-
-exclude famrel:
-Adjusted R-squared:  0.02327 
-
-exclude Wald:
-Adjusted R-squared:  0.02465 
-
-exclude Dalc:
-Adjusted R-squared:  0.02439
-
-exclude goout:
-Adjusted R-squared:  0.006961 
-
-
-exclude freetime:
-Adjusted R-squared:  0.02328 
-
-exclude romantic:
-
-Adjusted R-squared:  0.009661 
-
-
-
-Therefore we drop activities from the model
-
-
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + activities, data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc, data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-
-
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout + Dalc , data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-```{r}
-model_full <- lm(G3 ~ romantic + freetime + goout , data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-```{r}
-model_full <- lm(G3 ~ romantic + goout , data= student_mat)
-summary(model_full)
-vif(model_full)
-```
-
------
-```{r}
-ideal.student.model <- lm(G3 ~ romantic + goout, data= student_mat)
-summary(ideal.student.model)
-vif(ideal.student.model)
-```
 
 When removing the other variables the most ideal variables are whether the student goes out or if they are in a romantic relationship. According to this model, as the grade increases, the romantic and goout variable will decrease by the given estimates. Indicating that the less the student does/has these things the higher their grade will be.
 
-There might be some collinearity between the explanatory variables, given that when removed the estimates have changed. 
+
 
 
 ```{r}
@@ -436,14 +331,8 @@ ggplot(student_mat, aes(G3, goout, color=romantic)) +
 
 
 ```{r}
-one.way <- aov(G3 ~ romantic + goout, data = student_mat)
-summary(one.way)
-```
 
-
-```{r}
-
-ggplot(data = ideal.student.model, aes(x = .fitted, y = .resid)) +
+ggplot(data = model.reduced, aes(x = .fitted, y = .resid)) +
   geom_point() +
   geom_jitter() +
   geom_hline(yintercept = 0, linetype = "dashed") +
@@ -455,13 +344,14 @@ ggplot(data = ideal.student.model, aes(x = .fitted, y = .resid)) +
 
 
 ```{r}
-ggplot(ideal.student.model, aes(x=.resid)) +
+ggplot(model.reduced, aes(x=.resid)) +
   geom_histogram(binwidth = 1) +
   xlab("resid")
 ```
 
 ```{r}
-ggplot(ideal.student.model, aes(sample = .resid)) +
+ggplot(model.reduced, aes(sample = .resid)) +
+    stat_qq_line() +
  stat_qq() +
   xlab("resid")
 ```
@@ -474,6 +364,19 @@ By using the rlm model the error is lower than the lm.
 ```{r}
 library(MASS)
 robust <- rlm(G3 ~ romantic + goout, data=student_mat)
+summary(robust)
+```
+```{r}
+ggplot(robust, aes(sample = .resid)) +
+    stat_qq_line() +
+ stat_qq() +
+  xlab("resid")
+```
+
+
+
+
+```{r}
 summary(robust)$sigma
 summary(ideal.student.model)$sigma
 ```
@@ -517,6 +420,7 @@ ggplot(data = model_full, aes(x = .fitted, y = .resid)) +
 ```{r}
 ggplot(model_full, aes(sample = .resid)) +
  stat_qq() +
+    stat_qq_line() +
   xlab("resid")
 ```
 
@@ -557,6 +461,7 @@ ggplot(data = model_full, aes(x = .fitted, y = .resid)) +
 
 ggplot(model_full, aes(sample = .resid)) +
  stat_qq() +
+  stat_qq_line() +
   xlab("resid")
 
 ```
@@ -611,28 +516,22 @@ tab$group1 <- as.integer(as.character(tab$group1))
 ```
 
 
-Dichoutimous outcome when we change it to pass fail
-
-
-
-```{r}
-lm.out <- lm(PassFail ~ goout, data = student.mat.binary)
-summary(lm.out)
-```
+Dichotomous outcome when we change it to pass fail
 
 
 ```{r}
-student.mat.binary$linear_resid <- resid(lm.out)
-ggplot(student.mat.binary, aes(x = goout, y = linear_resid)) +
-    geom_point() +
-    ggtitle('Residual Plot')
+student.mat.binary.full <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data = student.mat.binary, family = binomial(link = "logit"))
+summary(student.mat.binary.full)
 ```
 
 
 
 
-
-## Predicting Data
+```{r}
+student.mat.binary.reduced <- glm(PassFail ~  goout, data = student.mat.binary, family = binomial(link = "logit"))
+summary(student.mat.binary.reduced)
+```
+---
 
 ```{r}
 set.seed(811)
@@ -641,85 +540,145 @@ student_train <- student.mat.binary[train.rows,]
 student_test <- student.mat.binary[-train.rows,]
 ```
 
-```{r}
-student.pass <- table(student_train$PassFail) %>% prop.table
-student.pass
-```
 
 ```{r}
-lr.out <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data=student_train, family=binomial(link = 'logit'))
-summary(lr.out)
+student_fail <- table(student_train$PassFail) %>% prop.table
+student_fail
 ```
 
 
+
+
 ```{r}
-student_train$prediction <- predict(lr.out, type = 'response', newdata = student_train)
+student.model.training <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data = student_train, family = binomial(link = "logit"))
+summary(student.model.training)
+
+```
+
+
+
+```{r}
+student_train$prediction <- predict(student.model.training, type = 'response', newdata = student_train)
 ggplot(student_train, aes(x = prediction, color = PassFail == 1)) + geom_density()
 ```
 
 
 ```{r}
-student_train$prediction_class <- student_train$prediction > 0.6
+student_train$prediction_class <- student_train$prediction > 0.5
 tab <- table(student_train$prediction_class, 
              student_train$PassFail) %>% prop.table() %>% print()
 ```
 
 
 ```{r}
-0.025362319 / (0.025362319+ 0.007246377)
-```
 
-
-
-```{r}
-library(caret)
-predicted <- predict(lr.out, student_test)
-#optimal <- optimalCutoff(student_test$PassFail, predicted)[1]
-confusionMatrix(student_test$PassFail, predicted)
-
-
+accuracy <- sum(tab[1], tab[4]) / sum(tab[1:4])
+precision <- tab[4] / sum(tab[4], tab[2])
+sensitivity <- tab[4] / sum(tab[4], tab[3])
+fscore <- (2 * (sensitivity * precision))/(sensitivity + precision)
+specificity <- tab[1] / sum(tab[1], tab[2])
 ```
 
 
 ```{r}
-student.mat.binary.reduced <- glm(PassFail ~ goout, data = student.mat.binary, family = binomial(link = "logit"))
-summary(student.mat.binary.reduced)
+accuracy
 ```
-
-```{r}
-anova(student.mat.binary.reduced, student.mat.binary, test="Chisq") 
-```
-
-
-
-y = 0.36874 - 0.23757 * goout
-
-gout ranges from 1 through 5 
-
-
-The odds of passing ?^?^?
-```{r}
-logistic <- function(t) {
-  return(1/ (1 + exp(-t)))
-}
-
-ggplot() + 
-  stat_function(fun=logistic, n = 101) +
-  xlim(-4,4) +
-  xlab('t')
-```
-
+The overall accuracy of this model is 63.40%. Considering that 58.69565 % of the data set population has failed their final exam and would be used for guessing. 
 
 
 ```{r}
-library(chi)
-1-pchisq(534.75,394)
+#The true positive rate: the percentage of individuals the model correctly predicted would pass 
+
+sensitivity
+
 ```
 
 
 ```{r}
-1-pchisq(528.24,393)
+
+#the true negative: percentage the model correctly predicted would fail
+specificity
 ```
+
+
+```{r}
+library(pROC)
+roc.info <- roc(student_train$PassFail, student.model.training$fitted.values, plot = TRUE, print.auc = TRUE)
+```
+
+```{r}
+
+roc.df <- data.frame(
+  tpp=roc.info$sensitivities*100,
+  fpp=(1 - roc.info$specificities) * 100,
+  thresholds=roc.info$thresholds
+)
+
+head(roc.df)
+
+```
+
+
+```{r}
+tail(roc.df)
+```
+
+
+A poor classifier (like Classifier 2 below) will not able to distinguish the two classes well and therefore its ROC curve will be closer to the diagonal. Implying lower TPR rates (more false negatives) and higher FPR rates (more false positives). This leads us to the concept of AUC or Area Under the Curve discussed in point c.
+
+## For passing
+
+
+
+```{r}
+
+student_pass <- table(student_test$PassFail) %>% prop.table()
+student_pass
+
+```
+
+
+```{r}
+student_test$prediction <- predict(student.model.training, newdata = student_test, type = 'response')
+student_test$prediciton_class <- student_test$prediction > 0.5
+tab_test <- table(student_test$prediciton_class, student_test$PassFail) %>%
+prop.table() %>% print()
+```
+
+
+```{r}
+
+accuracy <- sum(tab_test[1], tab_test[4]) / sum(tab_test[1:4])
+precision <- tab_test[4] / sum(tab_test[4], tab_test[2])
+sensitivity <- tab_test[4] / sum(tab_test[4], tab_test[3])
+fscore <- (2 * (sensitivity * precision))/(sensitivity + precision)
+specificity <- tab_test[1] / sum(tab_test[1], tab_test[2])
+```
+
+```{r}
+accuracy
+```
+
+41% passed their final exam
+
+```{r}
+sensitivity
+```
+
+
+```{r}
+specificity
+```
+
+
+
+https://www.technologynetworks.com/analysis/articles/sensitivity-vs-specificity-318222
+
+
+
+
+
+
 
 
 ## Comparing the models
@@ -733,10 +692,16 @@ Why is this analysis important?
 Limitations of the analysis?
 
 
+Conclusion on how to tune the analysis
+
+The model would do better with all the variables
+
+
+
 
 
 ```{r}
-model_full3 <- glm(PassFail ~ romantic + age + address+ famsize+ Pstatus + Medu + Fedu + Mjob + reason + guardian + traveltime + studytime + failures + schoolsup + paid + activities + nursery + higher + internet + freetime + health + absences + goout + Dalc + Walc + famrel + activities + sex, data= student.mat.binary)
+model_full3 <- glm(PassFail ~ romantic + age + address+ famsize+ Pstatus + Medu + Fedu + Mjob + reason + guardian + traveltime + studytime + failures + schoolsup + paid + activities + nursery + higher + internet + freetime + health + absences + goout + Dalc + Walc + famrel + activities + sex + G1 + G2, data= student.mat.binary)
 summary(model_full3)
 vif(model_full3)
 ```
@@ -745,6 +710,7 @@ vif(model_full3)
 ```{r}
 ggplot(model_full3, aes(sample = .resid)) +
  stat_qq() +
+  stat_qq_line() +
   xlab("resid")
 ```
 
@@ -756,7 +722,7 @@ ggplot(model_full3, aes(x=.resid)) +
 ```
 
 ```{r}
-ideal.student.model.3 <- glm(PassFail ~ failures  + goout +sex  , data= student.mat.binary)
+ideal.student.model.3 <- glm(PassFail ~ absences  + G1  + G2  , data= student.mat.binary)
 summary(ideal.student.model.3)
 ```
 
@@ -773,6 +739,9 @@ ggplot(ideal.student.model.3, aes(sample = .resid)) +
  stat_qq() +
   xlab("resid")
 ```
+
+
+
 
 
 https://statisticsbyjim.com/regression/multicollinearity-in-regression-analysis/#:~:text=The%20potential%20solutions%20include%20the,or%20partial%20least%20squares%20regression.
