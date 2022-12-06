@@ -284,14 +284,14 @@ Significance!!
 
 
 
+
+
+
 ## Using Multiple Regression
 
 Upon further implementation, I realized there may be more than one explanatory variable for the output. To consider the variable in conjunction with the `G3` variable, I will be using multiple linear regression, and establishing my best naively implemented model to predict G3. 
 
 When using many variables in a linear regression, there may also exist a collinearity between them. To determine if there are any such vairables I used `vif` to check for collinearity.
-
-
-
 
 
 
@@ -308,41 +308,16 @@ vif(model.full)
 
 `Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant.
 
+Through backwards selection I removed `activities`, `Walc`, `freetime` and `Dalc`. The model with the highest R adjusted is shown below. 
 
-Get rid of activitiesd:
-
-Walc:
-
-
-freetime:
-
-
-
-+ Dalc 0.05082 
-
-
-
-```{r}
-model.reduced <- lm(G3 ~ romantic + goout  + famrel + sex + age, data= student_mat)
-summary(model.full)
-vif(model.full)
-```
-
-
-
-
-Model full linear model equation is:
+Model reduced linear model equation is:
 
 y =  18.6197 -0.9137 * romanticyes -0.5201 * goout + 0.2802 * famrel + 0.8842 * sexM - 0.4675 * age
 
-The model has an adjusted R squared of 0.0508. 
-
-
-By reducing the model and calling it `model.reduced` we can now closely evaluate if the two variables are a better model fit. 
-
+The model has an adjusted R squared of 0.05082. 
 
 ```{r}
-model.reduced <- lm(G3 ~ goout + sex + age, data= student_mat)
+model.reduced <- lm(G3 ~ romantic + famrel + goout + sex + age, data= student_mat)
 summary(model.reduced)
 vif(model.reduced)
 ```
@@ -354,7 +329,7 @@ When removing the other variables the most ideal variables are whether the stude
 | Model           | Adjusted R  |
 | --------------- | ----------- |
 | model.full      | 0.04234     |
-| model.reduced   | 0.0508      |
+| model.reduced   | 0.05082     |
 
 
 Model reduced has a better adjusted R but the increase is not by a significant amount. 
@@ -398,24 +373,44 @@ By using the rlm model the error is lower than the lm.
 
 #### Robust Full
 
+
+
 ```{r}
-library(MASS)
+library(robustbase)
+
+res <- lmrob(G3 ~ romantic + freetime + goout + Walc + Dalc + famrel + activities + sex + age,
+  data=student_mat)
+summary(res)
 ```
+famrel
 
-
-
-```{r}
-robust.model.full <- rlm(G3 ~ romantic + freetime + goout + Walc + famrel + activities + sex + age, data= student_mat)
-summary(robust.model.full)
-vif(robust.model.full)
-```
-
-
++Dalc
+freetime
++ romantic
 
 ```{r}
-robust.model.reduced <- rlm(G3 ~ goout + sex + age, data=student_mat)
+robust.model.reduced <- lmrob(G3 ~   goout + Walc   + sex + age,
+  data=student_mat)
 summary(robust.model.reduced)
-vif(model.full)
+```
+
+```{r}
+plot(robust.model.reduced$residuals)
+```
+
+The drawback of this robust function is there is no way to plo
+```{r}
+df <- data.frame(matrix(unlist(robust.model.reduced$residuals), nrow=length(robust.model.reduced$residuals), byrow=TRUE))
+names(df)[1] <- ".resid" 
+df
+```
+
+
+```{r}
+ggplot(df, aes(sample = .resid)) +
+ stat_qq() +
+    stat_qq_line() +
+  xlab("resid")
 ```
 
 
@@ -449,7 +444,7 @@ Using backwards elimination I cut freetime
 
 famrel
 
-activitied: 0.06805 
+activities: 0.06805 
 
 + dalc: 06947 
 
@@ -509,11 +504,6 @@ Logistic
 student.mat.binary <- student_mat %>%
       mutate(PassFail = ifelse(G3 >= 12,1,0))
 student.mat.binary
-```
-
-```{r}
-tab <- describeBy(student.mat.binary$goout, group = student.mat.binary$PassFail, mat = TRUE, skew = FALSE)
-tab$group1 <- as.integer(as.character(tab$group1))
 ```
 
 
@@ -663,12 +653,6 @@ specificity
 
 
 
-## Comparing the models
-
-Compare the statistically significant models to the multiple
-
-Given by the rsquared values this does not correctly 
-
 # Conclusion
 Why is this analysis important?
 This analysis shows that there is some relationship between the social lives of these students in the study and to their final grades. These models however, could be better tuned with the other variables collected in the study. 
@@ -676,7 +660,9 @@ This analysis shows that there is some relationship between the social lives of 
 Limitations of this analysis are that it is one sample size of only two schools in one country. There also could have been missing data, human error that can account for a lot of the values (the abundant 0s). Having that outlier can skew the model and not be a clear indicator. Another consideration to make is there are many other variables that were not included that could have helped with the model tuning. 
 
 
-The linear regression model performed better than I expected. After tuning the model to increase the R adjusted I 
+Based on the residuals QQ plot I would say that a linear regression model is not the best fit for evaluating social life to the students grades when there are grades of 0. However, if there are no failing grades, based on the model without 0, I would say that a linear model is a reasonablee fit.
+
+Logistic regression is also reasonable to use, since it does not have the restrictions of 
 
 
 
