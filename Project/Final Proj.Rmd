@@ -122,7 +122,11 @@ ggplot(student_mat, aes(sex)) + geom_bar()
 ggplot(student_mat, aes(G3)) + geom_bar() + facet_wrap(vars(sex))
 ```
 
-Normally distributed with one obvious outlier. 
+
+
+```{r}
+ggplot(student_mat, aes(G3)) + geom_bar() + facet_grid(vars(school), vars(sex))
+```
 
 
 
@@ -139,14 +143,14 @@ ggplot(student_mat, aes(romantic)) + geom_bar()
 
 
 ```{r}
-romantic.model <- lm(G3 ~ romantic, data = student_mat)
+romantic.model <- lm(G3 ~ romantic + sex + age, data = student_mat)
 summary(romantic.model)
 ```
 
 ```{r}
 ggplot(student_mat, aes(x= G3)) +
   geom_histogram(bins = 10) +
-  facet_wrap(vars(romantic))
+  facet_grid(vars(romantic), vars(sex))
 ```
 
 
@@ -166,7 +170,7 @@ describeBy(student_mat$G3,
 ```
 
 ```{r}
-one.way <- aov(G3 ~ romantic, data = student_mat)
+one.way <- aov(G3 ~ romantic + sex + age, data = student_mat)
 summary(one.way)
 ```
 
@@ -197,7 +201,7 @@ ggplot(student_mat, aes(x= G3)) +
 
 
 ```{r}
-activities.model <- lm(G3 ~ activities, data = student_mat)
+activities.model <- lm(G3 ~ activities + sex + age, data = student_mat)
 summary(activities.model)
 ```
 By looking at the summary of the `activities.model` we can see that activites estimate is not statistically significant as indicated by p-value which is greater than 0.05. As well as the F-statistic and p value given, which is also greater than 0.05.
@@ -234,7 +238,7 @@ ggplot(student_mat, aes(x= G3)) +
 
 
 ```{r}
-freetime.model <- lm(G3 ~ freetime, data = student_mat)
+freetime.model <- lm(G3 ~ freetime + sex + age, data = student_mat)
 summary(freetime.model)
 ```
 Not significant!
@@ -252,7 +256,7 @@ ggplot(student_mat, aes(famrel)) + geom_bar()
 ```
 
 ```{r}
-famrel.model <- lm(G3 ~ famrel, data = student_mat)
+famrel.model <- lm(G3 ~ famrel+ sex + age, data = student_mat)
 summary(famrel.model)
 ```
 
@@ -270,7 +274,7 @@ ggplot(student_mat, aes(goout)) + geom_bar()
 
 
 ```{r}
-goout.model <- lm(G3 ~ goout, data = student_mat)
+goout.model <- lm(G3 ~ goout+ sex + age, data = student_mat)
 summary(goout.model)
 
 ```
@@ -278,42 +282,6 @@ summary(goout.model)
 Significance!!
 
 
-
-
-
-## Alcohol Consumption
-
-Dalc indicated the workday alcohol consumption from very low to very high and Walc indicates weekend alcohol consumption, also from very low to very high.
-
-
-```{r}
-ggplot(student_mat, aes(Dalc)) + geom_bar()
-
-```
-
-
-```{r}
-Dalc.model <- lm(G3 ~ Dalc, data = student_mat)
-summary(Dalc.model)
-```
-
-Not significant
-
-
-```{r}
-ggplot(student_mat, aes(Walc)) + geom_bar()
-
-```
-
-
-```{r}
-
-Walc.model <- lm(G3 ~ Walc, data = student_mat)
-summary(Walc.model)
-```
-
-
-Not significant
 
 
 ## Using Multiple Regression
@@ -333,7 +301,7 @@ When using many variables in a linear regression, there may also exist a colline
 
 
 ```{r}
-model.full <- lm(G3 ~ romantic + freetime + goout + Walc + famrel + activities, data= student_mat)
+model.full <- lm(G3 ~ romantic + freetime + goout + Walc + famrel + activities+ sex + age + Dalc, data= student_mat)
 summary(model.full)
 vif(model.full)
 ```
@@ -341,31 +309,40 @@ vif(model.full)
 `Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant.
 
 
+Get rid of activitiesd:
+
+Walc:
+
+
+freetime:
+
+
+
++ Dalc 0.05082 
+
+
+
 ```{r}
-ggplot(student_mat, aes(G3, goout, color=romantic)) +
-  geom_col() +
-  facet_wrap(vars(goout))
+model.reduced <- lm(G3 ~ romantic + goout  + famrel + sex + age, data= student_mat)
+summary(model.full)
+vif(model.full)
 ```
-
-
-As shown in the bar charts above there are 5 values for the `goout` variable where 5 indicated that the student goes out very regularly. The most common answer is 3 within the group and it is also the group where mosr students do not have a romantic relationship. The meduan grade for the students who go out with a value of 3 is around 10. 
-
 
 
 
 
 Model full linear model equation is:
 
-y =  11.00617 - 1.21809 * romanticyes +  0.19663 * freetime -0.62747 * goout + 0.03788 * Walc + 0.24075 * famrel + activitiesyes * 0.18516
+y =  18.6197 -0.9137 * romanticyes -0.5201 * goout + 0.2802 * famrel + 0.8842 * sexM - 0.4675 * age
 
-The model has an adjusted R squared of 0.024. 
+The model has an adjusted R squared of 0.0508. 
 
 
 By reducing the model and calling it `model.reduced` we can now closely evaluate if the two variables are a better model fit. 
 
 
 ```{r}
-model.reduced <- lm(G3 ~ romantic + goout , data= student_mat)
+model.reduced <- lm(G3 ~ goout + sex + age, data= student_mat)
 summary(model.reduced)
 vif(model.reduced)
 ```
@@ -376,8 +353,8 @@ When removing the other variables the most ideal variables are whether the stude
 
 | Model           | Adjusted R  |
 | --------------- | ----------- |
-| model.full      | 0.02439     |
-| model.reduced   | 0.02933     |
+| model.full      | 0.04234     |
+| model.reduced   | 0.0508      |
 
 
 Model reduced has a better adjusted R but the increase is not by a significant amount. 
@@ -428,7 +405,7 @@ library(MASS)
 
 
 ```{r}
-robust.model.full <- rlm(G3 ~ romantic + freetime + goout + Walc + famrel + activities, data= student_mat)
+robust.model.full <- rlm(G3 ~ romantic + freetime + goout + Walc + famrel + activities + sex + age, data= student_mat)
 summary(robust.model.full)
 vif(robust.model.full)
 ```
@@ -436,7 +413,7 @@ vif(robust.model.full)
 
 
 ```{r}
-robust.model.reduced <- rlm(G3 ~ romantic + goout, data=student_mat)
+robust.model.reduced <- rlm(G3 ~ goout + sex + age, data=student_mat)
 summary(robust.model.reduced)
 vif(model.full)
 ```
@@ -456,24 +433,44 @@ student.pass
 ### The New Full Model
 
 ```{r}
-model.full <- lm(G3 ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data= student.pass)
+model.full <- lm(G3 ~ romantic + freetime + goout + famrel + activities + sex + age +Walc + Dalc, data= student.pass)
 summary(model.full)
 vif(model.full)
 ```
 ### Linear Model
 
-Now without the outliers only `goout` is the only statistically significant variable.
+Now without the outliers only `sex` is the only statistically significant variable.
+
+Using backwards elimination I cut freetime
+
+
++ romantic:
+
+
+famrel
+
+activitied: 0.06805 
+
++ dalc: 06947 
+
+
+And arrive at the final model below
+
+
 
 
 ```{r}
-model_reduced <- lm(G3 ~ goout , data= student.pass)
-summary(model_reduced)
-
+model.reduced <- lm(G3 ~  goout + age  + sex + Walc, data= student.pass)
+summary(model.reduced)
+vif(model.reduced)
 ```
 
+
+
+
 ```{r}
 
-ggplot(data = model_reduced, aes(x = .fitted, y = .resid)) +
+ggplot(data = model.reduced, aes(x = .fitted, y = .resid)) +
   geom_point() +
   geom_jitter() +
   geom_hline(yintercept = 0, linetype = "dashed") +
@@ -484,7 +481,7 @@ ggplot(data = model_reduced, aes(x = .fitted, y = .resid)) +
 ```
 
 ```{r}
-ggplot(model_reduced, aes(sample = .resid)) +
+ggplot(model.reduced, aes(sample = .resid)) +
  stat_qq() +
     stat_qq_line() +
   xlab("resid")
@@ -492,8 +489,8 @@ ggplot(model_reduced, aes(sample = .resid)) +
 
 ```{r}
 
-ggplot(model_reduced, aes(x=.resid)) +
-  geom_histogram(binwidth = .5) +
+ggplot(model.reduced, aes(x=.resid)) +
+  geom_histogram(binwidth = 1) +
   xlab("resid")
 
 ```
@@ -501,68 +498,6 @@ ggplot(model_reduced, aes(x=.resid)) +
 
 https://book.stat420.org/transformations.html
 
----
-
-
-```{r}
-model_full <- lm(log(G3) ~ goout , data= student.pass)
-summary(model_full)
-#vif(model_full)
-```
-
-
-```{r}
-
-ggplot(data = model_full, aes(x = .fitted, y = .resid)) +
-  geom_point() +
-  geom_jitter() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  xlab("Fitted values") +
-  ylab("Residuals")
-
-
-```
-
-```{r}
-
-ggplot(model_full, aes(sample = .resid)) +
- stat_qq() +
-  stat_qq_line() +
-  xlab("resid")
-
-```
-
-```{r}
-
-ggplot(model_full, aes(x=.resid)) +
-  geom_histogram(binwidth = .25) +
-  xlab("resid")
-
-```
-
-By performing a logistic transformation of the G3 we get a much cleaner look at the residuals normal distribution.
-
-
-```{r}
-# Avg squared data change to the one before the log
-sqrt(mean(resid(ideal.student.model) ^ 2))
-```
-
-```{r}
-sqrt(mean(resid(model_full) ^ 2))
-```
-
-```{r}
-sqrt(mean((student_mat$G3 - fitted(ideal.student.model)) ^ 2))
-
-```
-
-```{r}
-student_mat.2 <- student_mat %>% filter(G3 != 0)
-sqrt(mean((student_mat.2$G3 - exp(fitted(model_full))) ^ 2))
-```
-
-couldn't do logistic transformation do to some grades being 0 .
 
 ----
 
@@ -601,7 +536,7 @@ student_fail
 
 
 ```{r}
-student.model.training <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities, data = student_train, family = binomial(link = "logit"))
+student.model.training <- glm(PassFail ~ romantic + freetime + goout + Dalc + Walc + famrel + activities + sex + age, data = student_train, family = binomial(link = "logit"))
 summary(student.model.training)
 
 ```
@@ -723,10 +658,6 @@ specificity
 
 
 
-https://www.technologynetworks.com/analysis/articles/sensitivity-vs-specificity-318222
-
-
-
 
 
 
@@ -740,58 +671,19 @@ Given by the rsquared values this does not correctly
 
 # Conclusion
 Why is this analysis important?
-Limitations of the analysis?
+This analysis shows that there is some relationship between the social lives of these students in the study and to their final grades. These models however, could be better tuned with the other variables collected in the study. 
+
+Limitations of this analysis are that it is one sample size of only two schools in one country. There also could have been missing data, human error that can account for a lot of the values (the abundant 0s). Having that outlier can skew the model and not be a clear indicator. Another consideration to make is there are many other variables that were not included that could have helped with the model tuning. 
 
 
-Conclusion on how to tune the analysis
-
-The model would do better with all the variables
+The linear regression model performed better than I expected. After tuning the model to increase the R adjusted I 
 
 
 
 
 
-```{r}
-model_full3 <- glm(PassFail ~ romantic + age + address+ famsize+ Pstatus + Medu + Fedu + Mjob + reason + guardian + traveltime + studytime + failures + schoolsup + paid + activities + nursery + higher + internet + freetime + health + absences + goout + Dalc + Walc + famrel + activities + sex + G1 + G2, data= student.mat.binary)
-summary(model_full3)
-vif(model_full3)
-```
 
-
-```{r}
-ggplot(model_full3, aes(sample = .resid)) +
- stat_qq() +
-  stat_qq_line() +
-  xlab("resid")
-```
-
-```{r}
-ggplot(model_full3, aes(x=.resid)) +
-  geom_histogram(binwidth = .1) +
-  xlab("resid")
-
-```
-
-```{r}
-ideal.student.model.3 <- glm(PassFail ~ absences  + G1  + G2  , data= student.mat.binary)
-summary(ideal.student.model.3)
-```
-
-```{r}
-ggplot(ideal.student.model.3, aes(x=.resid)) +
-  geom_histogram(binwidth = .1) +
-  xlab("resid")
-
-```
-
-
-```{r}
-ggplot(ideal.student.model.3, aes(sample = .resid)) +
- stat_qq() +
-  xlab("resid")
-```
-
-
+https://www.technologynetworks.com/analysis/articles/sensitivity-vs-specificity-318222
 
 https://towardsdatascience.com/demystifying-roc-curves-df809474529a
 
