@@ -19,6 +19,7 @@ library(car)
 
 ## Abstract
 
+Two portuguese schools recorded the demographics, grades, social and homelife of a sample of students. I wanted to see if I could find a model that could predict if having a social life relates to a students grade. Throughout this project, I used multiple forms of regression, linear, logistic, and robust to try and find the best model.
 
 ## Research question 
 
@@ -73,9 +74,16 @@ student_mat <- read_delim(curl(student_mat_csv),delim = ";")
 
 
 ```{r}
+student_por_csv <- "https://raw.githubusercontent.com/moiyajosephs/Data606-Final/main/student-por.csv"
+student_por <- read_delim(curl(student_por_csv),delim = ";")
+```
+
+
+
+```{r}
 summary(student_mat)
 ```
- Attributes for both student-mat.csv (Math course):
+ Attributes for student-mat.csv (Math course):
 1 school - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
 2 sex - student's sex (binary: 'F' - female or 'M' - male)
 3 age - student's age (numeric: from 15 to 22)
@@ -169,10 +177,6 @@ describeBy(student_mat$G3,
            group = student_mat$romantic, mat=TRUE)
 ```
 
-```{r}
-one.way <- aov(G3 ~ romantic + sex + age, data = student_mat)
-summary(one.way)
-```
 
 ### Analyzing the r^2
 
@@ -291,7 +295,7 @@ Significance!!
 
 Upon further implementation, I realized there may be more than one explanatory variable for the output. To consider the variable in conjunction with the `G3` variable, I will be using multiple linear regression, and establishing my best naively implemented model to predict G3. 
 
-When using many variables in a linear regression, there may also exist a collinearity between them. To determine if there are any such vairables I used `vif` to check for collinearity.
+When using many variables in a linear regression, there may also exist a collinearity between them. To determine if there are any such variables I used `vif` to check for collinearity.
 
 
 
@@ -306,7 +310,6 @@ summary(model.full)
 vif(model.full)
 ```
 
-`Romantic` and `goout` variables are the only ones with p-values less than 0.05, indicating that they are statistically significant.
 
 Through backwards selection I removed `activities`, `Walc`, `freetime` and `Dalc`. The model with the highest R adjusted is shown below. 
 
@@ -366,9 +369,9 @@ Plotting the residuals show that the residuals are not normally distributed. Lik
 
 ### Using robust linear regression
 
-In trying to find the best model to fit this data, I researched models that perform better than lm when there are outliers. In my search I discovered the `rlm` function from the library MASS. 
+In trying to find the best model to fit this data, I researched models that perform better than lm when there are outliers. In my search I discovered the `lmrob` function from the library MASS. 
 
-By using the rlm model the error is lower than the lm.
+By using the `lmrob` model the error is lower than the lm.
 
 
 #### Robust Full
@@ -377,16 +380,12 @@ By using the rlm model the error is lower than the lm.
 
 ```{r}
 library(robustbase)
-
 res <- lmrob(G3 ~ romantic + freetime + goout + Walc + Dalc + famrel + activities + sex + age,
   data=student_mat)
 summary(res)
 ```
-famrel
+Through backwards selection I removed `famrel`, `Dalc`, `freetime` and `romantic``. The model with the highest R adjusted is shown below. famrel
 
-+Dalc
-freetime
-+ romantic
 
 ```{r}
 robust.model.reduced <- lmrob(G3 ~   goout + Walc   + sex + age,
@@ -398,11 +397,12 @@ summary(robust.model.reduced)
 plot(robust.model.reduced$residuals)
 ```
 
-The drawback of this robust function is there is no way to plo
+The drawback of this robust function is there is no way to plot the residuals in a QQ without turning them into a dataframe.
+
 ```{r}
 df <- data.frame(matrix(unlist(robust.model.reduced$residuals), nrow=length(robust.model.reduced$residuals), byrow=TRUE))
 names(df)[1] <- ".resid" 
-df
+head(df)
 ```
 
 
@@ -432,27 +432,9 @@ model.full <- lm(G3 ~ romantic + freetime + goout + famrel + activities + sex + 
 summary(model.full)
 vif(model.full)
 ```
-### Linear Model
+### Model reduced
 
-Now without the outliers only `sex` is the only statistically significant variable.
-
-Using backwards elimination I cut freetime
-
-
-+ romantic:
-
-
-famrel
-
-activities: 0.06805 
-
-+ dalc: 06947 
-
-
-And arrive at the final model below
-
-
-
+Using backwards elimination I removed `freetime`, `romantic`, `famrel`, `activities`, `dalc` from the model and arrive at the final model below.
 
 ```{r}
 model.reduced <- lm(G3 ~  goout + age  + sex + Walc, data= student.pass)
@@ -489,9 +471,6 @@ ggplot(model.reduced, aes(x=.resid)) +
   xlab("resid")
 
 ```
-
-
-https://book.stat420.org/transformations.html
 
 
 ----
@@ -599,8 +578,7 @@ head(roc.df)
 tail(roc.df)
 ```
 
-
-A poor classifier (like Classifier 2 below) will not able to distinguish the two classes well and therefore its ROC curve will be closer to the diagonal. Implying lower TPR rates (more false negatives) and higher FPR rates (more false positives). This leads us to the concept of AUC or Area Under the Curve discussed in point c.
+Based on the ROC curve being close to the diagonal, above I think the model is a poor classifier. Implying lower TPR rates (more false negatives) and higher FPR rates (more false positives). This leads us to the concept of AUC or Area Under the Curve discussed in point c.
 
 ## For passing
 
@@ -653,8 +631,8 @@ specificity
 
 
 
-# Conclusion
-Why is this analysis important?
+## Conclusion
+
 This analysis shows that there is some relationship between the social lives of these students in the study and to their final grades. These models however, could be better tuned with the other variables collected in the study. 
 
 Limitations of this analysis are that it is one sample size of only two schools in one country. There also could have been missing data, human error that can account for a lot of the values (the abundant 0s). Having that outlier can skew the model and not be a clear indicator. Another consideration to make is there are many other variables that were not included that could have helped with the model tuning. 
@@ -662,19 +640,16 @@ Limitations of this analysis are that it is one sample size of only two schools 
 
 Based on the residuals QQ plot I would say that a linear regression model is not the best fit for evaluating social life to the students grades when there are grades of 0. However, if there are no failing grades, based on the model without 0, I would say that a linear model is a reasonablee fit.
 
-Logistic regression is also reasonable to use, since it does not have the restrictions of 
+Logistic regression is also reasonable to use, since it does not have the restrictions of needing a normally distributed residuals, however the models AUD showed to not be a strong classifier.
 
 
 
 
 
+## Resources
 
-https://www.technologynetworks.com/analysis/articles/sensitivity-vs-specificity-318222
-
-https://towardsdatascience.com/demystifying-roc-curves-df809474529a
-
-https://statisticsbyjim.com/regression/multicollinearity-in-regression-analysis/#:~:text=The%20potential%20solutions%20include%20the,or%20partial%20least%20squares%20regression.
-
-
-https://www.statology.org/robust-regression-in-r/
+Frost, Jim. “Multicollinearity in Regression Analysis: Problems, Detection, and Solutions.” Statistics By Jim, 22 July 2022, https://statisticsbyjim.com/regression/multicollinearity-in-regression-analysis/#:~:text=The%20potential%20solutions%20include%20the,or%20partial%20least%20squares%20regression. 
+“Sensitivity vs Specificity.” Analysis &amp; Separations from Technology Networks, https://www.technologynetworks.com/analysis/articles/sensitivity-vs-specificity-318222. 
+Sigrist, Fabio. “Demystifying Roc and Precision-Recall Curves.” Medium, Towards Data Science, 4 Mar. 2022, https://towardsdatascience.com/demystifying-roc-and-precision-recall-curves-d30f3fad2cbf. 
+Zach. “How to Perform Robust Regression in R (Step-by-Step).” Statology, 10 Apr. 2021, https://www.statology.org/robust-regression-in-r/. 
 
